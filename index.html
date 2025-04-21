@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gestão de Metas | Sua Empresa</title>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+        <link href="css/style.css" rel="stylesheet">
+        <!-- Adicione no cabeçalho do seu HTML -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <!-- Adicione antes do seu app.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+    <div id="export-menu" class="dropdown-menu">
+        <button id="btn-export-pdf" class="dropdown-item">
+        <i class="fas fa-file-pdf"></i> Exportar como PDF
+        </button>
+        <button id="btn-export-excel" class="dropdown-item">
+        <i class="fas fa-file-excel"></i> Exportar como Excel
+        </button>
+    </div>
+<body>
+    <div class="app-container">
+        <!-- Cabeçalho -->
+        <header class="app-header">
+            <div class="logo-container">
+                <i class="fas fa-bullseye"></i>
+                <h1>Gestão de Metas</h1>
+            </div>
+            <div class="header-actions">
+                <button id="btn-export" class="btn btn-outline">
+                    <i class="fas fa-file-export"></i> Exportar
+                </button>
+                <div class="user-profile">
+                    <img src="assets/user-avatar.jpg" alt="Usuário">
+                </div>
+            </div>
+            <!-- Adicione este botão no header -->
+<button id="btn-dashboard" class="btn btn-outline">
+    <i class="fas fa-chart-bar"></i> Dashboard
+</button>
+
+<!-- Adicione esta seção antes do main-content -->
+<div id="dashboard-sidebar" class="dashboard-sidebar">
+    <div class="dashboard-header">
+        <h3>Dashboard de Metas</h3>
+        <button id="btn-close-dashboard" class="btn btn-icon">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="dashboard-content">
+        <div class="chart-container">
+            <canvas id="dashboard-chart-individual"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="dashboard-chart-global"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="dashboard-chart-atingimento"></canvas>
+        </div>
+    </div>
+</div>
+<div class="theme-switch-wrapper">
+    <label class="theme-switch" for="checkbox">
+        <input type="checkbox" id="checkbox" />
+        <div class="slider round premium-slider">
+            <span class="sun"><i class="fas fa-sun"></i></span>
+            <span class="moon"><i class="fas fa-moon"></i></span>
+        </div>
+    </label>
+</div>
+        </header>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Dashboard de Metas</h2>
+                <div class="breadcrumb">
+                    <span>Home</span> / <span>Metas</span>
+                </div>
+            </div>
+
+            <!-- Resumo Geral -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="card-icon bg-blue">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <div class="card-info">
+                        <span>Filiais</span>
+                        <h3 id="total-filiais">0</h3>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon bg-green">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="card-info">
+                        <span>Meta Total</span>
+                        <h3 id="total-meta">R$ 0,00</h3>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon bg-purple">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="card-info">
+                        <span>Atingimento</span>
+                        <h3 id="total-atingimento">0%</h3>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon bg-orange">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="card-info">
+                        <span>Dias Restantes</span>
+                        <h3 id="total-dias-restantes">0</h3>
+                    </div>
+                </div>
+            </div>
+            <!-- Meta Geral -->
+<div class="card">
+    <div class="card-header">
+        <h3>Meta Geral</h3>
+    </div>
+    <div class="card-body">
+        <form id="form-meta-geral">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="meta-geral-valor">Valor da Meta Geral (R$)</label>
+                    <input type="number" id="meta-geral-valor" class="form-control" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="meta-geral-realizado">Realizado Geral (R$)</label>
+                    <input type="number" id="meta-geral-realizado" class="form-control" min="0" step="0.01" disabled>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" id="btn-salvar-meta-geral" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Salvar Meta Geral
+                </button>
+            </div>
+        </form>
+        <div id="comparativo-meta-geral" class="comparative-container" style="margin-top: 1rem; display: none;">
+            <!-- Comparativo será inserido aqui via JavaScript -->
+        </div>
+    </div>
+</div>
+
+            <!-- Adicionar Nova Meta -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Adicionar Nova Meta</h3>
+                </div>
+                <div class="card-body">
+                    <form id="form-add-meta">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="filial">Filial</label>
+                                <select id="filial" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Ananindeua">Ananindeua</option>
+                                    <option value="Macapá">Macapá</option>
+                                    <option value="São Luís">São Luís</option>
+                                    <option value="Bacabal">Bacabal</option>
+                                    <option value="Teresina">Teresina</option>
+                                    <option value="Cuiabá">Cuiabá</option>
+                                    <option value="Rondonópolis">Rondonópolis</option>
+                                    <option value="Sinop">Sinop</option>
+                                    <option value="Porto Velho">Porto Velho</option>
+                                    <option value="Vilhena">Vilhena</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="nucleo">Núcleo</label>
+                                <select id="nucleo" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="PA/AP">PA/AP</option>
+                                    <option value="MA/PI">MA/PI</option>
+                                    <option value="MT">MT</option>
+                                    <option value="RO">RO</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="meta-valor">Valor da Meta (R$)</label>
+                                <input type="number" id="meta-valor" class="form-control" min="0" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="realizado-valor">Realizado (R$)</label>
+                                <input type="number" id="realizado-valor" class="form-control" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="data-inicio">Data Início</label>
+                                <input type="date" id="data-inicio" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="data-fim">Data Fim</label>
+                                <input type="date" id="data-fim" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Adicionar Meta
+                            </button>
+                            <button type="button" id="btn-cancel" class="btn btn-outline">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                    <div id="comparative-container" style="display: none;">
+                        <!-- Comparativo será inserido aqui via JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestão de Feriados -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Feriados e Dias Não Úteis</h3>
+                </div>
+                <div class="card-body">
+                    <div class="feriados-container">
+                        <div class="feriados-form">
+                            <div class="form-group">
+                                <label for="feriado-data">Adicionar Feriado</label>
+                                <div class="input-group">
+                                    <input type="date" id="feriado-data" class="form-control">
+                                    <button id="btn-add-feriado" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Adicionar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="feriados-list">
+                            <h4>Feriados Cadastrados</h4>
+                            <div id="lista-feriados" class="tags-container">
+                                <!-- Feriados serão adicionados aqui via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Metas -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Metas das Filiais</h3>
+                    <div class="card-actions">
+                        <button id="btn-refresh" class="btn btn-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="table-metas">
+                            <thead>
+                                <tr>
+                                    <th>Filial</th>
+                                    <th>Núcleo</th>
+                                    <th>Período</th>
+                                    <th>Meta (R$)</th>
+                                    <th>Realizado (R$)</th>
+                                    <th>Atingimento</th>
+                                    <th>Dias Restantes</th>
+                                    <th>Por Dia</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dados serão preenchidos via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Desempenho por Filial</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chart-individual" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Meta Geral vs Realizado</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chart-global" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div id="modal-edit" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>Editar Meta</h4>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-meta">
+                    <input type="hidden" id="edit-id">
+                    <div class="form-group">
+                        <label for="edit-filial">Filial</label>
+                        <input type="text" id="edit-filial" class="form-control" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-nucleo">Núcleo</label>
+                        <input type="text" id="edit-nucleo" class="form-control" disabled>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-meta-valor">Meta (R$)</label>
+                            <input type="number" id="edit-meta-valor" class="form-control" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-realizado-valor">Realizado (R$)</label>
+                            <input type="number" id="edit-realizado-valor" class="form-control" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-data-inicio">Data Início</label>
+                            <input type="date" id="edit-data-inicio" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-data-fim">Data Fim</label>
+                            <input type="date" id="edit-data-fim" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-save-edit" class="btn btn-primary">Salvar</button>
+                <button class="btn btn-outline modal-close">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <footer class="page-footer">
+        <div class="container">
+            <p>Criado por <strong>Pabricio Lima</strong> © 2025 - Marca Registrada</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
