@@ -1,3 +1,7 @@
+// Configuração do Supabase
+const supabaseUrl = 'https://ksyygambidrptnwndjhr.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzeXlnYW1iaWRycHRud25kamhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3OTgyNTAsImV4cCI6MjA2MTM3NDI1MH0.fiK1NBwc1mIO3KQkYrPwzTf2cDqoWJAIyqDd8saAsDk';
+
 // Elementos do DOM
 const formAddMeta = document.getElementById('form-add-meta');
 const tableMetas = document.getElementById('table-metas').querySelector('tbody');
@@ -31,14 +35,15 @@ const dashboardOverlay = document.createElement('div');
 dashboardOverlay.className = 'overlay';
 
 // Funções de inicialização
-function init() {
+async function init() {
     setupDatePickers();
-    loadData();
+    await loadData();
     setupEventListeners();
     initCharts();
     updateUI();
     updateMetaGeral();
-    setupExportMenu();
+    setupExportButtons();
+    setupThemeToggle();
     
     // Adiciona o overlay ao body
     document.body.appendChild(dashboardOverlay);
@@ -51,18 +56,82 @@ function setupDatePickers() {
     document.getElementById('feriado-data').min = today;
 }
 
-function loadData() {
-    metas = JSON.parse(localStorage.getItem('metas')) || [];
-    feriados = JSON.parse(localStorage.getItem('feriados')) || [];
+
+async function loadData() {
+    try {
+        // Carrega metas do Supabase
+        const { data: metasData, error: metasError } = await supabase
+            .from('metas')
+            .select('*');
+        
+        if (!metasError) {
+            metas = metasData || [];
+        } else {
+            console.error('Erro ao carregar metas:', metasError);
+            metas = JSON.parse(localStorage.getItem('metas')) || [];
+        }
+
+        // Carrega feriados do Supabase
+        const { data: feriadosData, error: feriadosError } = await supabase
+            .from('feriados')
+            .select('data');
+        
+        if (!feriadosError) {
+            feriados = feriadosData.map(item => item.data) || [];
+        } else {
+            console.error('Erro ao carregar feriados:', feriadosError);
+            feriados = JSON.parse(localStorage.getItem('feriados')) || [];
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        // Fallback para localStorage em caso de erro
+        metas = JSON.parse(localStorage.getItem('metas')) || [];
+        feriados = JSON.parse(localStorage.getItem('feriados')) || [];
+    }
 }
 
-function saveData() {
-    localStorage.setItem('metas', JSON.stringify(metas));
-    localStorage.setItem('feriados', JSON.stringify(feriados));
-}
+async function saveData() {
+    try {
+        // Salva metas no Supabase
+        const { error: metasError } = await supabase
+            .from('metas')
+            .upsert(metas, { onConflict: ['id'] });
+        
+        if (metasError) {
+            console.error('Erro ao salvar metas:', metasError);
+            localStorage.setItem('metas', JSON.stringify(metas));
+        }
 
+        // Salva feriados no Supabase (primeiro deleta todos e depois insere os novos)
+        const { error: deleteFeriadosError } = await supabase
+            .from('feriados')
+            .delete()
+            .neq('data', ''); // Deleta todos os registros
+
+        if (!deleteFeriadosError && feriados.length > 0) {
+            const feriadosToInsert = feriados.map(data => ({ data }));
+            const { error: insertFeriadosError } = await supabase
+                .from('feriados')
+                .insert(feriadosToInsert);
+            
+            if (insertFeriadosError) {
+                console.error('Erro ao salvar feriados:', insertFeriadosError);
+                localStorage.setItem('feriados', JSON.stringify(feriados));
+            }
+        } else if (deleteFeriadosError) {
+            console.error('Erro ao deletar feriados:', deleteFeriadosError);
+            localStorage.setItem('feriados', JSON.stringify(feriados));
+        }
+    } catch (error) {
+        console.error('Erro ao salvar dados:', error);
+        // Fallback para localStorage em caso de erro
+        localStorage.setItem('metas', JSON.stringify(metas));
+        localStorage.setItem('feriados', JSON.stringify(feriados));
+    }
+}
+    
 // Funções de manipulação de dados
-function addMeta() {
+async function addMeta() {
     const filial = document.getElementById('filial').value;
     const nucleo = document.getElementById('nucleo').value;
     const metaValor = parseFloat(document.getElementById('meta-valor').value);
@@ -83,7 +152,7 @@ function addMeta() {
     };
 
     metas.push(novaMeta);
-    saveData();
+    await saveData();
     updateUI();
     showComparative(novaMeta);
     
@@ -1393,23 +1462,155 @@ function setupEventListeners() {
     document.getElementById('btn-refresh').addEventListener('click', updateUI);
 }
 // Theme Mode Functions
+// Theme Mode Functions - Versão Corrigida
 function setupThemeToggle() {
     const toggleSwitch = document.querySelector('#checkbox');
-    const currentTheme = localStorage.getItem('theme');
+    const currentTheme = localStorage.getItem('theme') || 'dark-mode'; // Default to dark
     
-    // Load saved theme
-    if (currentTheme) {
-        document.body.classList.add(currentTheme);
-        if (currentTheme === 'dark-mode') {
-            toggleSwitch.checked = true;
-        }
+    // Apply saved theme
+    if (currentTheme === 'dark-mode') {
+        document.body.classList.add('dark-mode');
+        if (toggleSwitch) toggleSwitch.checked = true;
+    } else {
+        document.body.classList.remove('dark-mode');
+        if (toggleSwitch) toggleSwitch.checked = false;
     }
     
     // Theme switch event
-    toggleSwitch.addEventListener('change', switchTheme, false);
+    if (toggleSwitch) {
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light-mode');
+            }
+            applyThemeToCharts();
+        });
+    }
     
-    // Apply theme to charts
+    // Apply theme to charts immediately
     applyThemeToCharts();
+}
+
+function applyThemeToCharts() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const textColor = isDarkMode ? '#f5f5f5' : '#666';
+    const tooltipBg = isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)';
+    
+    // Update all charts
+    const charts = [chartIndividual, chartGlobal, dashboardChartIndividual, dashboardChartGlobal, dashboardChartAtingimento];
+    
+    charts.forEach(chart => {
+        if (chart) {
+            // Update chart options
+            chart.options.scales = chart.options.scales || {};
+            
+            // Update axes
+            ['x', 'y'].forEach(axis => {
+                if (chart.options.scales[axis]) {
+                    chart.options.scales[axis].grid = {
+                        ...chart.options.scales[axis].grid,
+                        color: gridColor
+                    };
+                    chart.options.scales[axis].ticks = {
+                        ...chart.options.scales[axis].ticks,
+                        color: textColor
+                    };
+                }
+            });
+            
+            // Special handling for radar chart
+            if (chart.options.scales.r) {
+                chart.options.scales.r.angleLines = {
+                    color: gridColor
+                };
+                chart.options.scales.r.pointLabels = {
+                    color: textColor
+                };
+            }
+            
+            // Update plugins
+            chart.options.plugins = chart.options.plugins || {};
+            
+            if (chart.options.plugins.title) {
+                chart.options.plugins.title.color = textColor;
+            }
+            
+            if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                chart.options.plugins.legend.labels.color = textColor;
+            }
+            
+            if (chart.options.plugins.tooltip) {
+                chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+            }
+            
+            chart.update();
+        }
+    });
+}
+
+function applyThemeToCharts() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+    const textColor = isDarkMode ? '#f5f5f5' : '#666';
+    const tooltipBg = isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)';
+    
+    // Atualiza todos os gráficos
+    const charts = [chartIndividual, chartGlobal, dashboardChartIndividual, dashboardChartGlobal, dashboardChartAtingimento];
+    
+    charts.forEach(chart => {
+        if (chart) {
+            // Atualiza cores do gráfico
+            chart.options.scales = chart.options.scales || {};
+            
+            // Configurações para eixos X e Y
+            ['x', 'y'].forEach(axis => {
+                if (chart.options.scales[axis]) {
+                    chart.options.scales[axis].grid = {
+                        ...chart.options.scales[axis].grid,
+                        color: gridColor
+                    };
+                    chart.options.scales[axis].ticks = {
+                        ...chart.options.scales[axis].ticks,
+                        color: textColor
+                    };
+                }
+            });
+            
+            // Configurações específicas para gráfico radar
+            if (chart.options.scales.r) {
+                chart.options.scales.r.angleLines = {
+                    color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                };
+                chart.options.scales.r.pointLabels = {
+                    color: textColor
+                };
+            }
+            
+            // Configurações de plugins
+            chart.options.plugins = chart.options.plugins || {};
+            
+            if (chart.options.plugins.title) {
+                chart.options.plugins.title.color = textColor;
+            }
+            
+            if (chart.options.plugins.legend) {
+                chart.options.plugins.legend.labels = {
+                    ...chart.options.plugins.legend.labels,
+                    color: textColor
+                };
+            }
+            
+            if (chart.options.plugins.tooltip) {
+                chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+            }
+            
+            chart.update();
+        }
+    });
 }
 
 function switchTheme(e) {
@@ -1433,6 +1634,7 @@ function applyThemeToCharts() {
     
     charts.forEach(chart => {
         if (chart) {
+            // Atualiza cores do gráfico baseado no tema
             chart.options.scales = {
                 ...chart.options.scales,
                 x: {

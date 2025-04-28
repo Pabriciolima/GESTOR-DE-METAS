@@ -1,4 +1,5 @@
 
+/* Adicione no INÍCIO do seu CSS */
 :root {
     --primary-color: #3498db;
     --secondary-color: #2ecc71;
@@ -12,6 +13,21 @@
     --header-height: 70px;
     --border-radius: 8px;
     --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --text-color: #2c3e50;
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+}
+/* Dark mode variables */
+body.dark-mode {
+    --primary-color: #4b6cb7;
+    --secondary-color: #182848;
+    --bg-color: #1a1a2e;
+    --text-color: #f5f5f5;
+    --card-bg: #16213e;
+    --border-color: #2d4059;
+    --dark-color: #f5f5f5;
+    --light-color: #2c3e50;
+    --gray-color: #95a5a6;
 }
 * {
     margin: 0;
@@ -700,165 +716,66 @@ dropdown-menu {
 .export-buttons .btn i {
     font-size: 1rem;
 }
-/* Footer Styles */
-.page-footer {
-    background-color: #2c3e50;
-    color: white;
-    padding: 15px 0;
-    text-align: center;
-    margin-top: 30px;
-    font-size: 0.9rem;
-}
-
-.page-footer .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-
-.page-footer strong {
-    color: #4b6cb7;
-    font-weight: 600;
-}
-/* Theme Switch - Premium */
-.theme-switch-wrapper {
-    display: flex;
-    align-items: center;
-    margin-left: auto;
-    padding-right: 15px;
-}
-
 .theme-switch {
     position: relative;
     display: inline-block;
+    margin-left: 15px;
+}
+
+.theme-switch input[type="checkbox"] {
+    display: none;
+}
+
+.toggle {
+    cursor: pointer;
+    display: inline-block;
     width: 60px;
     height: 30px;
+    background-color: var(--gray-color);
+    border-radius: 30px;
+    position: relative;
+    transition: background-color 0.3s;
 }
 
-.theme-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.premium-slider {
+.toggle-icon {
     position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(145deg, #434343, #000000);
-    transition: .4s;
-    border-radius: 34px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.premium-slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
-    width: 22px;
-    left: 4px;
-    bottom: 4px;
-    background: linear-gradient(145deg, #f6d365, #fda085);
-    transition: .4s;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background-color: white;
     border-radius: 50%;
-    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s;
 }
 
-input:checked + .premium-slider {
-    background: linear-gradient(145deg, #a1c4fd, #c2e9fb);
-}
-
-input:checked + .premium-slider:before {
-    transform: translateX(30px);
-    background: linear-gradient(145deg, #ffd89b, #19547b);
-}
-
-.premium-slider .sun, 
-.premium-slider .moon {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    color: white;
+.toggle-icon i {
     font-size: 12px;
-    transition: all 0.3s ease;
-}
-
-.premium-slider .sun {
-    left: 8px;
-    opacity: 1;
-    color: #FFD700;
-}
-
-.premium-slider .moon {
-    right: 8px;
+    position: absolute;
     opacity: 0;
-    color: #B0E0E6;
+    transition: opacity 0.3s;
 }
 
-input:checked + .premium-slider .sun {
-    opacity: 0;
-}
-
-input:checked + .premium-slider .moon {
+.toggle-icon .fa-sun {
+    color: #f39c12;
     opacity: 1;
 }
 
-/* Dark Mode Styles */
-body.dark-mode {
-    --primary-color: #4b6cb7;
-    --secondary-color: #182848;
-    --background-color: #121212;
-    --card-bg: #1e1e1e;
-    --text-color: #f5f5f5;
-    --text-secondary: #b0b0b0;
-    --border-color: #333;
-    --table-header-bg: #2d3748;
-    --table-row-odd: #1a1a1a;
-    --table-row-even: #252525;
-    --input-bg: #2d2d2d;
-    --input-border: #444;
-    --shadow-color: rgba(0, 0, 0, 0.5);
+.theme-switch input:checked + .toggle {
+    background-color: var(--primary-color);
 }
 
-body.dark-mode {
-    background-color: var(--background-color);
-    color: var(--text-color);
+.theme-switch input:checked + .toggle .toggle-icon {
+    transform: translateX(30px);
 }
 
-body.dark-mode .card,
-body.dark-mode .modal-content {
-    background-color: var(--card-bg);
-    border-color: var(--border-color);
-    box-shadow: 0 4px 6px var(--shadow-color);
+.theme-switch input:checked + .toggle .toggle-icon .fa-sun {
+    opacity: 0;
 }
 
-body.dark-mode table {
-    color: var(--text-color);
-}
-
-body.dark-mode thead {
-    background-color: var(--table-header-bg);
-}
-
-body.dark-mode tbody tr:nth-child(odd) {
-    background-color: var(--table-row-odd);
-}
-
-body.dark-mode tbody tr:nth-child(even) {
-    background-color: var(--table-row-even);
-}
-
-body.dark-mode input,
-body.dark-mode select {
-    background-color: var(--input-bg);
-    border-color: var(--input-border);
-    color: var(--text-color);
-}
-
-body.dark-mode .page-footer {
-    background-color: #1a1a1a;
-    border-top: 1px solid #333;
+.theme-switch input:checked + .toggle .toggle-icon .fa-moon {
+    color: #f5f5f5;
+    opacity: 1;
 }
